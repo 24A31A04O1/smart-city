@@ -1,4 +1,4 @@
-
+Flask-Bcrypt
 Flask
 supabase
 gunicorn
