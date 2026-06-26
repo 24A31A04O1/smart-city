@@ -436,5 +436,4 @@ def tracking():
 
 # ---------------- Run App ----------------
 if __name__ == "__main__":
-    print(f"Local: http://127.0.0.1:5000\nNetwork: http://{socket.gethostbyname(socket.gethostname())}:5000")
-    app.run("0.0.0.0", 5000, debug=True)
+    app.run(debug=True)
