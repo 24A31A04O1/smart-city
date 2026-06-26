@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Issue Tracking</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f9;
+      color: #333;
+      margin: 0;
+      padding: 40px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2rem;
+      color: #2c3e50;
+    }
+
+    .issue-box {
+      background-color: #fff;
+      border-radius: 12px;
+      padding: 20px 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .issue-info h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #2193b0;
+    }
+
+    .issue-info p {
+      margin: 4px 0;
+      font-size: 14px;
+    }
+
+    .status {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: white;
+      text-align: center;
+      min-width: 110px;
+      display: inline-block;
+    }
+
+    .status.pending { background-color: #f39c12; }
+    .status.progress { background-color: #2980b9; }
+    .status.resolved { background-color: #27ae60; }
+
+    .seen {
+      display: inline-block;
+      margin-left: 10px;
+      color: #27ae60;
+      font-weight: bold;
+    }
+
+    .not-seen {
+      display: inline-block;
+      margin-left: 10px;
+      color: #c0392b;
+      font-weight: bold;
+    }
+
+    .empty {
+      text-align: center;
+      color: #7f8c8d;
+      font-size: 1rem;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>📍 Issue Tracking</h2>
+
+  {% if issues %}
+    {% for issue in issues %}
+      <div class="issue-box">
+        <div class="issue-info">
+          <p><strong>Priority:</strong> {{ issue.priority }}</p>
+          <h3>{{ issue.place }}</h3>
+          <p><strong>Submitted:</strong> {{ issue.created_at[:10] }}</p>
+          <p><strong>Department:</strong> {{ issue.departments['name'] }}</p>
+          <p><strong>Latest Update:</strong> {{ issue.latest_update or "No updates yet" }}</p>
+        </div>
+
+        <div class="issue-status">
+          {% if issue.status == "Pending" %}
+            <span class="status pending">⏳ Pending</span>
+          {% elif issue.status == "In Progress" %}
+            <span class="status progress">🔧 In Progress</span>
+          {% elif issue.status == "Resolved" %}
+            <span class="status resolved">✅ Resolved</span>
+          {% endif %}
+
+          {% if issue.seen_by_department %}
+            <span class="seen">👀 Seen</span>
+          {% else %}
+            <span class="not-seen">❌ Not Seen</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty">No issues submitted yet.</div>
+  {% endif %}
+
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Submit New Issue</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+  <style>
+    body { font-family: Inter, Arial; background:#f7fbfd; padding:24px; }
+    .card { max-width:760px; margin:auto; background:#fff; padding:20px;
+            border-radius:10px; box-shadow:0 6px 24px rgba(0,0,0,0.08); }
+    label { display:block; margin:10px 0 6px; font-weight:600 }
+    input, select, textarea, button {
+      width:100%; padding:10px; border-radius:8px;
+      border:1px solid #ccc; font-size:14px
+    }
+    textarea { min-height:90px }
+    .row { display:flex; gap:12px }
+    .row > * { flex:1 }
+    .actions { display:flex; gap:10px; margin-top:12px }
+    .msg { padding:10px; border-radius:8px; margin-top:10px }
+    .success { background:#e6ffef; color:#0b7a3a }
+    .error { background:#fff1f0; color:#9b2b2b }
+    #map { height: 320px; border-radius:10px; margin-top:10px }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>Submit New Issue</h2>
+
+  <form id="testForm" enctype="multipart/form-data">
+
+    <label>District</label>
+    <select id="district" name="district_id" required>
+      <option value="">-- Select district --</option>
+    </select>
+
+    <label>City</label>
+    <select id="constituency" name="constituency_id" required>
+      <option value="">-- Select city --</option>
+    </select>
+
+    <label>Place</label>
+    <select id="places" name="places_id" required>
+      <option value="">-- Select place --</option>
+    </select>
+
+    <label>Department</label>
+    <select id="department" name="department_id" required>
+      <option value="">-- Select department --</option>
+    </select>
+
+    <label>Address</label>
+    <textarea name="address" required></textarea>
+
+    <label>Description</label>
+    <textarea name="description" required></textarea>
+
+    <label>Search Location</label>
+    <input id="searchBox" placeholder="Search area / street / landmark">
+
+    <div id="map"></div>
+
+    <div class="row">
+      <div>
+        <label>Latitude</label>
+        <input id="latitude" name="latitude" required>
+      </div>
+      <div>
+        <label>Longitude</label>
+        <input id="longitude" name="longitude" required>
+      </div>
+    </div>
+
+    <label>Upload Images (max 5)</label>
+    <input type="file" name="image1" accept="image/*">
+    <input type="file" name="image2" accept="image/*">
+    <input type="file" name="image3" accept="image/*">
+    <input type="file" name="image4" accept="image/*">
+    <input type="file" name="image5" accept="image/*">
+
+    <div class="actions">
+      <button type="button" id="useLocationBtn">📍 Use My Location</button>
+      <button type="submit" id="submitBtn">Submit Issue</button>
+    </div>
+  </form>
+
+  <div id="message"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+let map, marker;
+
+// ---------- MESSAGE ----------
+function showMessage(text, type="success") {
+  document.getElementById("message").innerHTML =
+    `<div class="msg ${type}">${text}</div>`;
+}
+
+// ---------- DROPDOWNS ----------
+async function fetchAndPopulate(url, selectEl) {
+  const res = await fetch(url);
+  if (!res.ok) return;
+  const data = await res.json();
+  data.forEach(item => {
+    const opt = document.createElement("option");
+    opt.value = item.id;
+    opt.textContent = item.name;
+    selectEl.appendChild(opt);
+  });
+}
+
+async function init() {
+  await fetchAndPopulate("/districts", district);
+}
+init();
+
+district.addEventListener("change", async () => {
+  constituency.innerHTML = '<option value="">-- Select city --</option>';
+  places.innerHTML = '<option value="">-- Select place --</option>';
+  department.innerHTML = '<option value="">-- Select department --</option>';
+  if (!district.value) return;
+
+  await fetchAndPopulate(`/constituencies/${district.value}`, constituency);
+  await fetchAndPopulate(`/departments_by_district/${district.value}`, department);
+});
+
+// ✅ Filter places by selected constituency
+constituency.addEventListener("change", async () => {
+  places.innerHTML = '<option value="">-- Select place --</option>';
+  if (!district.value || !constituency.value) return;
+  
+  // Fetch places for selected district and constituency
+  const res = await fetch(`/places/${district.value}/${constituency.value}`);
+  if (!res.ok) return;
+  const data = await res.json();
+  data.forEach(item => {
+    const opt = document.createElement("option");
+    opt.value = item.id;
+    opt.textContent = item.name;
+    places.appendChild(opt);
+  });
+});
+
+// ---------- MAP ----------
+map = L.map("map").setView([20.5937, 78.9629], 5);
+
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "© OpenStreetMap"
+}).addTo(map);
+
+map.on("click", e => setMarker(e.latlng.lat, e.latlng.lng));
+
+function setMarker(lat, lng) {
+  if (marker) map.removeLayer(marker);
+  marker = L.marker([lat, lng]).addTo(map);
+  latitude.value = lat.toFixed(6);
+  longitude.value = lng.toFixed(6);
+}
+
+// ---------- SEARCH ----------
+searchBox.addEventListener("keydown", async e => {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?format=json&q=${searchBox.value}`
+  );
+  const data = await res.json();
+  if (!data.length) return;
+  const lat = parseFloat(data[0].lat);
+  const lng = parseFloat(data[0].lon);
+  map.setView([lat, lng], 16);
+  setMarker(lat, lng);
+});
+
+// ---------- LIVE LOCATION ----------
+useLocationBtn.onclick = () => {
+  if (!navigator.geolocation) {
+    showMessage("Geolocation not supported", "error");
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+      setMarker(pos.coords.latitude, pos.coords.longitude);
+      showMessage("📍 Current location detected");
+    },
+    err => showMessage(err.message, "error"),
+    { enableHighAccuracy: true }
+  );
+};
+
+// ---------- SUBMIT ----------
+testForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Submitting...";
+
+  try {
+    const res = await fetch("/new_issue", {
+      method: "POST",
+      body: new FormData(testForm)
+    });
+
+    const data = await res.json();
+    if (res.status === 201) {
+      showMessage("✅ Issue submitted successfully!");
+      testForm.reset();
+    } else {
+      showMessage(`❌ Error: ${data.message}`, "error");
+      console.error("Server response:", data);
+    }
+  } catch (error) {
+    showMessage(`❌ Network error: ${error.message}`, "error");
+    console.error("Fetch error:", error);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Submit Issue";
+  }
+});
+</script>
+
+</body>
+</html>

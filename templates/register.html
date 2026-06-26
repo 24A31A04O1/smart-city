@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f3f4f6;
+      padding-top: 60px;
+      margin: 0;
+    }
+
+    .card {
+      width: 400px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 26px 24px;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 18px;
+      font-weight: 600;
+      color: #222;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      color: #444;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 11px 10px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 18px;
+      background: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    ul {
+      color: #b91c1c;
+      font-size: 14px;
+      padding-left: 18px;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>Create Account</h2>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <ul>
+        {% for m in messages %}
+          <li>{{ m }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST">
+
+    <label>Full Name</label>
+    <input name="full_name" required>
+
+    <label>Phone Number</label>
+    <input name="phone_number" required>
+
+    <label>State</label>
+    <input name="state" required>
+
+    <!-- DISTRICT -->
+    <label>District</label>
+    <select id="district" name="districts_id" required>
+      <option value="">Select district</option>
+      {% for d in districts %}
+        <option value="{{ d.id }}">{{ d.name }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- CONSTITUENCY -->
+    <label>Constituency</label>
+    <select id="constituency" name="constituencies_id" required>
+      <option value="">Select constituency</option>
+      {% for c in constituencies %}
+        <option value="{{ c.id }}" data-district="{{ c.districts_id }}">
+          {{ c.name }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <!-- PLACE -->
+    <label>Place</label>
+    <select id="place" name="place_id" required>
+      <option value="">Select place</option>
+      {% for p in places %}
+        <option value="{{ p.id }}"
+                data-district="{{ p.districts_id }}"
+                data-constituency="{{ p.constituencies_id }}">
+          {{ p.name }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <label>Email</label>
+    <input type="email" name="email" required>
+
+    <label>Password</label>
+    <input type="password" name="password" required>
+
+    <button type="submit">Register</button>
+  </form>
+</div>
+
+<script>
+  const districtSelect = document.getElementById("district");
+  const constituencySelect = document.getElementById("constituency");
+  const placeSelect = document.getElementById("place");
+
+  // Hide all options except first one
+  function hideAllOptions(select) {
+    Array.from(select.options).forEach((opt, index) => {
+      if (index !== 0) opt.style.display = "none";
+    });
+    select.value = "";
+  }
+
+  // 🔥 IMPORTANT: hide on page load
+  hideAllOptions(constituencySelect);
+  hideAllOptions(placeSelect);
+
+  // When district changes
+  districtSelect.addEventListener("change", function () {
+    const districtId = this.value;
+
+    hideAllOptions(constituencySelect);
+    hideAllOptions(placeSelect);
+
+    if (!districtId) return;
+
+    Array.from(constituencySelect.options).forEach(opt => {
+      if (opt.dataset.district === districtId) {
+        opt.style.display = "block";
+      }
+    });
+  });
+
+  // When constituency changes
+  constituencySelect.addEventListener("change", function () {
+    const constituencyId = this.value;
+    const districtId = districtSelect.value;
+
+    hideAllOptions(placeSelect);
+
+    if (!constituencyId) return;
+
+    Array.from(placeSelect.options).forEach(opt => {
+      if (
+        opt.dataset.district === districtId &&
+        opt.dataset.constituency === constituencyId
+      ) {
+        opt.style.display = "block";
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Submitted Issues</title>
+
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background-color: #f4f6f9;
+      color: #333;
+      padding: 40px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #2c3e50;
+    }
+
+    .back-link {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .back-link a {
+      background: #34495e;
+      padding: 10px 20px;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+
+    .issue-card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .issue-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .issue-title {
+      font-size: 1.2rem;
+      color: #2193b0;
+      font-weight: 600;
+    }
+
+    .meta {
+      font-size: 14px;
+      color: #555;
+      margin-top: 5px;
+    }
+
+    .toggle-btn {
+      font-size: 14px;
+      color: #007bff;
+      font-weight: bold;
+    }
+
+    .details {
+      display: none;
+      margin-top: 15px;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+
+    .details p {
+      margin: 6px 0;
+      font-size: 14px;
+    }
+
+    /* MEDIA (DOWNLOAD STYLE) */
+    .media-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .media-gallery a {
+      display: block;
+      width: 140px;
+      height: 100px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #ddd;
+      text-decoration: none;
+      background: #f9fafb;
+    }
+
+    .media-gallery img,
+    .media-gallery video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="back-link">
+  <a href="/dashboard">← Back to Dashboard</a>
+</div>
+
+<h2>📂 My Submitted Issues</h2>
+
+{% if issues|length == 0 %}
+  <p style="text-align:center;">No issues submitted yet.</p>
+{% endif %}
+
+{% for issue in issues %}
+<div class="issue-card">
+
+  <!-- HEADER -->
+  <div class="issue-header" onclick="toggleDetails('d{{ loop.index }}')">
+    <div>
+      <div class="issue-title">
+        {{ issue.places.name }}
+      </div>
+      <div class="meta">
+        {{ issue.departments.name }} • {{ issue.created_at[:10] }}
+      </div>
+    </div>
+
+    <div class="toggle-btn">View Details ⌄</div>
+  </div>
+
+  <!-- DETAILS -->
+  <div class="details" id="d{{ loop.index }}">
+    <p><strong>District:</strong> {{ issue.districts.name }}</p>
+    <p><strong>Constituency:</strong> {{ issue.constituencies.name }}</p>
+    <p><strong>Department:</strong> {{ issue.departments.name }}</p>
+    <p><strong>Address:</strong> {{ issue.address }}</p>
+    <p><strong>Description:</strong> {{ issue.description }}</p>
+    <p><strong>Location:</strong> {{ issue.latitude }}, {{ issue.longitude }}</p>
+    <p><strong>Reference ID:</strong> {{ issue.issue_token }}</p>
+
+    {% if issue.media_urls %}
+    <div class="media-gallery">
+      {% for media in issue.media_urls %}
+        <a href="{{ media }}" download target="_blank">
+          {% if media.endswith(".mp4") or media.endswith(".webm") %}
+            <video src="{{ media }}" muted></video>
+          {% else %}
+            <img src="{{ media }}">
+          {% endif %}
+        </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endfor %}
+
+<script>
+function toggleDetails(id) {
+  const el = document.getElementById(id);
+  el.style.display = (el.style.display === "block") ? "none" : "block";
+}
+</script>
+
+</body>
+</html>
